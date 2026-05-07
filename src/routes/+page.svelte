@@ -2,9 +2,18 @@
   import type { Todo } from '../types/todo';
   import { onMount } from 'svelte';
 
+  type Filter = 'all' | 'active' | 'completed';
+
   let todos = $state([] as Todo[]);
   let newTodo: string = $state('');
   let isInitialized: boolean = $state(false);
+  let filter: Filter = $state('all');
+
+  const filteredTodos = $derived.by(() => {
+    if (filter === 'active') return todos.filter((t) => !t.done);
+    if (filter === 'completed') return todos.filter((t) => t.done);
+    return todos;
+  });
 
   onMount(() => {
     if (typeof window !== 'undefined') {
@@ -42,8 +51,11 @@
     }
   }
 
-  function deleteTodo(index: number) {
-    todos.splice(index, 1);
+  function deleteTodo(todo: Todo) {
+    const index = todos.indexOf(todo);
+    if (index !== -1) {
+      todos.splice(index, 1);
+    }
   }
 </script>
 
@@ -71,8 +83,25 @@
     </button>
   </div>
 
+  <div class="flex items-center gap-2 mb-4" role="group" aria-label="Filter todos">
+    {#each ['all', 'active', 'completed'] as const as f}
+      <button
+        type="button"
+        onclick={() => (filter = f)}
+        aria-pressed={filter === f}
+        class={`px-3 py-1 rounded-lg text-sm font-medium border ${
+          filter === f
+            ? 'bg-blue-500 text-white border-blue-500'
+            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+        }`}
+      >
+        {f === 'all' ? 'All' : f === 'active' ? 'Active' : 'Completed'}
+      </button>
+    {/each}
+  </div>
+
   <ul class="w-full max-w-md">
-    {#each todos as todo, i}
+    {#each filteredTodos as todo (todo)}
       <li class="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm mb-2">
         <div class="flex items-center gap-3">
           <input
@@ -84,7 +113,7 @@
             >{todo.text}</span
           >
         </div>
-        <button onclick={() => deleteTodo(i)} class="text-red-500 font-semibold hover:underline">
+        <button onclick={() => deleteTodo(todo)} class="text-red-500 font-semibold hover:underline">
           Delete
         </button>
       </li>
