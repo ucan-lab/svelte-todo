@@ -5,7 +5,7 @@
   let todos = $state([] as Todo[]);
   let newTodo: string = $state('');
   let isInitialized: boolean = $state(false);
-  let editingIndex: number | null = $state(null);
+  let editingIndex: number = $state(-1);
   let editingText: string = $state('');
 
   onMount(() => {
@@ -45,23 +45,30 @@
   }
 
   function deleteTodo(index: number) {
+    if (editingIndex === index) {
+      editingIndex = -1;
+    } else if (editingIndex > index) {
+      editingIndex--;
+    }
     todos.splice(index, 1);
   }
 
   function startEdit(index: number) {
-    console.log('start edit', index, todos[index]);
     editingIndex = index;
     editingText = todos[index].text;
   }
 
   function commitEdit() {
-    console.log('commit edit', editingIndex, editingText);
-    if (editingIndex !== null) {
-      todos[editingIndex].text = editingText;
-      todos[editingIndex].done = false;
-      editingIndex = null;
+    if (editingIndex === -1) return;
+    const trimmed = editingText.trim();
+    if (!trimmed) {
+      editingIndex = -1;
       editingText = '';
+      return;
     }
+    todos[editingIndex].text = trimmed;
+    editingIndex = -1;
+    editingText = '';
   }
 </script>
 
@@ -102,11 +109,9 @@
             <input
               type="text"
               bind:value={editingText}
-              onblur={commitEdit}
               onkeydown={(e) => {
-                if (e.key === 'Enter' && !e.isComposing) {
-                  commitEdit();
-                }
+                if (e.key === 'Enter' && !e.isComposing) commitEdit();
+                if (e.key === 'Escape') editingIndex = -1;
               }}
               class="text-lg p-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
