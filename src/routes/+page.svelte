@@ -5,6 +5,8 @@
   let todos = $state([] as Todo[]);
   let newTodo: string = $state('');
   let isInitialized: boolean = $state(false);
+  let editingIndex: number | null = $state(null);
+  let editingText: string = $state('');
 
   onMount(() => {
     if (typeof window !== 'undefined') {
@@ -45,6 +47,22 @@
   function deleteTodo(index: number) {
     todos.splice(index, 1);
   }
+
+  function startEdit(index: number) {
+    console.log('start edit', index, todos[index]);
+    editingIndex = index;
+    editingText = todos[index].text;
+  }
+
+  function commitEdit() {
+    console.log('commit edit', editingIndex, editingText);
+    if (editingIndex !== null) {
+      todos[editingIndex].text = editingText;
+      todos[editingIndex].done = false;
+      editingIndex = null;
+      editingText = '';
+    }
+  }
 </script>
 
 <main class="min-h-screen bg-gray-100 flex flex-col items-center py-10">
@@ -80,9 +98,25 @@
             bind:checked={todo.done}
             class="h-5 w-5 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
           />
-          <span class={`text-lg ${todo.done ? 'line-through text-gray-400' : 'text-gray-700'}`}
-            >{todo.text}</span
-          >
+          {#if editingIndex === i}
+            <input
+              type="text"
+              bind:value={editingText}
+              onblur={commitEdit}
+              onkeydown={(e) => {
+                if (e.key === 'Enter' && !e.isComposing) {
+                  commitEdit();
+                }
+              }}
+              class="text-lg p-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          {:else}
+            <span
+              ondblclick={() => startEdit(i)}
+              class={`text-lg cursor-pointer ${todo.done ? 'line-through text-gray-400' : 'text-gray-700'}`}
+              >{todo.text}</span
+            >
+          {/if}
         </div>
         <button onclick={() => deleteTodo(i)} class="text-red-500 font-semibold hover:underline">
           Delete
