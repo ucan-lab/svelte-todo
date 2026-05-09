@@ -49,13 +49,11 @@
   }
 
   function startEdit(index: number) {
-    console.log('start edit', index, todos[index]);
     editingIndex = index;
     editingText = todos[index].text;
   }
 
   function commitEdit() {
-    console.log('commit edit', editingIndex, editingText);
     if (editingIndex !== null) {
       todos[editingIndex].text = editingText;
       todos[editingIndex].done = false;
